@@ -16,7 +16,7 @@ export async function clientLoader() {
   // 세션 확인
   //-------------------------------------------------------
   if (useAuthStore.getState().status === "loading") {
-    // 로그인 상태가 아직 로딩 중이면, 세션을 확인하고 상태를 업데이트
+    // 로그인 상태가 아직 로딩 중이면 세션을 확인하고 상태를 업데이트
     const { data: { session } } = await supabase.auth.getSession()
     useAuthStore.getState().setSession(session)
   }
@@ -41,12 +41,12 @@ export async function clientLoader() {
   return { songs: data }
 }
 
-// 로딩 화면. HydrateFallback 이름 정해져 있음
+// 로딩 화면
 export function HydrateFallback() {
   return <div>로그인 세션 연결 중...</div>
 }
 
-// 오류 화면. ErrorBoundary 이름 정해져 있음
+// 오류 화면
 export function ErrorBoundary() {
   return <div>오류 발생</div>
 }
@@ -54,6 +54,7 @@ export function ErrorBoundary() {
 export default function List() {
   const { songs } = useLoaderData<typeof clientLoader>()
   const user = useAuthStore(s => s.user)
+  const githubSignIn = useAuthStore(s => s.githubSignIn)
   const navigate = useNavigate()
 
   return (
@@ -61,13 +62,16 @@ export default function List() {
       <h2>애창곡 리스트 {user && `(${user.email})`}</h2>
 
       {user ? (
+        //-------------------------------------------------------
+        // 로그인 상태
+        //-------------------------------------------------------
         <div>
           <button
             onClick={async () => {
               await useAuthStore.getState().signOut()
-              // alert("로그아웃")
               navigate('/')
-            }}>
+            }}
+          >
             로그아웃
           </button>
 
@@ -83,16 +87,35 @@ export default function List() {
             </ul>
           )}
         </div>
+
       ) : (
+        //-------------------------------------------------------
+        // 로그아웃 상태
+        //-------------------------------------------------------
         <div>
           <button
-            onClick={() => navigate('/login')}>
+            onClick={() => navigate('/login')}
+          >
             로그인
           </button>
 
           <button
-            onClick={() => navigate('/signup')}>
+            onClick={() => navigate('/signup')}
+          >
             Email 회원가입
+          </button>
+
+          <button
+            onClick={async () => {
+              try {
+                await githubSignIn()
+              } catch (error) {
+                console.error("GitHub 로그인 실패:", error)
+                alert("GitHub 로그인에 실패했습니다.")
+              }
+            }}
+          >
+            GitHub로 로그인
           </button>
         </div>
       )}
